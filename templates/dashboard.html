@@ -1,0 +1,704 @@
+{% extends 'base.html' %}
+
+{% block style %}
+    {{ super() }}
+
+    <style>
+        body{
+            height: 100vh;
+            min-width: 1024px;
+        }
+
+        .cursor-default{
+            cursor: default;
+        }
+
+        .content{
+            height: 100%;
+        }
+
+        .separator{
+            height: 10px;
+            width: 10px;
+        }
+
+        .header{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #dcdcdc;
+        }
+
+        .header-box{
+            height: 45px;
+            display: flex;
+            align-items: center;
+        }
+
+        #header_box_center{
+            height: 45px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .header-box a{
+            text-decoration: none;
+            color: #000000;
+            padding: 10px;
+        }
+
+        .header-box p{
+            margin: 0px;
+        }
+
+        #logBox{
+            background-color: #c0c0c0;
+            margin-top: 25px;
+        }
+
+        .action{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #dcdcdc;
+        }
+
+        .action-box{
+            display: flex;
+            flex-direction: row;
+        }
+
+        .action-box a{
+            text-decoration: none;
+        }
+
+        .action-box a button{
+            text-decoration: none;
+            color: #000000;
+        }
+
+        #abortButton{
+            margin-left: 5px;
+        }
+
+        .action-box-separator{
+            height: 30px;
+            width: 1px;
+            background-color: #dcdcdc;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        #category_select_main{
+            margin-bottom: 15px;
+        }
+
+        #category_select{
+            margin-right: 8px;
+        }
+
+        #category_select_label{
+            margin-left: 10px;
+
+        }
+
+        #upload_xml{
+            margin-right: 8px;
+        }
+
+        .mailbox{
+            margin-left: 10px;
+
+        }
+
+        .btn-close {
+            margin-left: auto;
+            margin-right: 7px;
+        }
+
+        #callback_select{
+            width: 250px;
+        }
+
+        .main{
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .main-box{
+            width: 50%;
+            padding: 15px;
+        }
+
+        .main-box-header{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .main-box-header-group{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .main-box-header-group h5{
+            margin: 0px;
+        }
+
+        .main-box-header-group p{
+            margin: 0px;
+            font-size: 10px;
+        }
+
+        #main_box_header_group{
+            display: flex;
+            flex-direction: row;
+        }
+
+        .main-box-header-group-sub{
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #main_box_left{
+            width: 22%;
+            border-right: 1px solid #dcdcdc;
+        }
+
+        .list_box{
+            width: 26%;
+        }
+
+        .item{
+            height: 75px;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-top: 1px solid #dcdcdc;
+        }
+
+        .item-box-selectable{
+            cursor: pointer;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: left;
+            padding-bottom: 3px;
+            padding-top: 3px;
+        }
+
+        .item-title{
+            margin: 0px;
+            cursor: pointer;
+        }
+
+        .item-subtitle{
+            margin: 0px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .troubleshootingPackageLink {
+            text-decoration: none;
+            color: #000;
+            // hacer que tenga un espacio entre los dos links
+            top: 101px;
+
+        }
+
+        .troubleshootingPackageLink:hover {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .switch-tittle{
+            margin-bottom: 0px;
+        }
+
+        .radio-tittle{
+            margin-bottom: 2px;
+        }
+
+        .form-check-input-radio {
+            position: absolute;
+            margin-top: 0.3rem;
+            margin-left: -1.25rem;
+        }
+
+    </style>
+{% endblock %}
+
+{% block script %}
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    function abortBuild() {
+        var logBox = document.getElementById("logBox");
+        logBox.innerHTML = "<p>Aborting tests</p>";
+
+        fetch('/abort_build', {
+            method: 'POST',
+        })
+        .then(response => response.json());
+
+        statusIntervalAbort = setInterval(updateConsole, 5000);
+    }
+
+    function runBuild() {
+        var selectedVersion = document.getElementById("category_select").value;
+        var inputMail = document.getElementById("inputMail").value;
+        var platform = document.querySelector('input[name="safewalkRadio"]:checked').value;
+        var devSwitch = document.getElementById("devSwitch").checked;
+        var ocUi = document.getElementById("oc-ui").checked;
+        var tntUi = document.getElementById("tnt-ui").checked;
+        var authApi = document.getElementById("auth-api").checked;
+        var authRadius = document.getElementById("auth-radius").checked;
+        var postmanOc = document.getElementById("postman-oc").checked;
+        var postmanTnt = document.getElementById("postman-tnt").checked;
+
+
+        var anySwitchSelected = Array.from(otherSwitches).some(function (switchElement) {
+            return switchElement.checked;
+        });
+
+        if (!isRunning && selectedVersion !== "" && anySwitchSelected) {
+            var data = new FormData();
+            data.append("selected_version", selectedVersion);
+            data.append("inputMail", inputMail);
+            data.append("platform", platform);
+            data.append("devSwitch", devSwitch);
+            data.append("ocUi", ocUi);
+            data.append("tntUi", tntUi);
+            data.append("authApi", authApi);
+            data.append("authRadius", authRadius);
+            data.append("postmanOc", postmanOc);
+            data.append("postmanTnt", postmanTnt);
+
+            fetch('/', {
+                method: 'POST',
+                body: data
+            })
+            .then(function (response) {
+            if (response.ok) {
+                var logBox = document.getElementById("logBox");
+                logBox.innerHTML = "<p>Sending tests</p>";
+                statusInterval = setInterval(waitUntilRunning, 5000);
+
+                setTimeout(function(){
+                    statusInterval = setInterval(updateConsole, 20000);
+                }, 20000);
+            } else {
+              throw new Error("Error en la solicitud");
+            }
+            })
+        } else {
+            return false;
+        }
+    }
+
+    document.getElementById("abortButton").addEventListener("click", abortBuild);
+    document.getElementById("runButton").addEventListener("click", runBuild);
+
+    var isRunning = false;
+    var result = "";
+
+    function updateStatus() {
+        fetch('/get_task_status')
+            .then(response => response.json())
+            .then(data => {
+                isRunning = data.isInProgress;
+                return isRunning;
+            });
+    }
+
+    function updateResult(){
+        fetch('/get_task_result')
+            .then(response => response.json())
+            .then(data => {
+                result = data.taskResult;
+                return result;
+            }
+            );
+    }
+
+    function waitUntilRunning(){
+        updateStatus();
+        if (isRunning){
+            clearInterval(statusInterval);
+        }
+    }
+
+    function updateConsole(){
+        updateStatus();
+
+        var logBox = document.getElementById("logBox");
+        if (isRunning) {
+            logBox.innerHTML = "<p>Test are RUNNING</p>";
+
+        }else{
+            updateResult();
+            if (result == "SUCCESS"){
+                clearInterval(statusInterval);
+                logBox.innerHTML = "<p>Test were FINISHED</p>";
+            }else if (result == "ABORTED"){
+                clearInterval(statusInterval);
+                clearInterval(statusIntervalAbort);
+                logBox.innerHTML = "<p>Test were ABORTED</p>";
+            }
+        }
+        updateStatus();
+    }
+
+    // MANEJO DE SWITCHES
+    var allSwitch = document.getElementById("allSwitch");
+    var otherSwitches = document.querySelectorAll('.form-check-input:not(#allSwitch):not(#devSwitch)');
+    var ocUiSwitch = document.getElementById("oc-ui");
+    var postmanOcSwitch = document.getElementById("postman-oc");
+    var mtRadio = document.getElementById("multitenancyPlatform");
+    var v5Radio = document.getElementById("V5Platform");
+
+    v5Radio.addEventListener("change", function () {
+        if (v5Radio.checked) {
+            ocUiSwitch.checked = false;
+            ocUiSwitch.disabled = true;
+            postmanOcSwitch.checked = false;
+            postmanOcSwitch.disabled = true;
+        } else {
+            ocUiSwitch.disabled = false;
+            postmanOcSwitch.disabled = false;
+        }
+    });
+
+    mtRadio.addEventListener("change", function () {
+        if (mtRadio.checked) {
+            if (allSwitch.checked){
+                ocUiSwitch.checked = true;
+                postmanOcSwitch.checked = true;
+            }else{
+                ocUiSwitch.disabled = false;
+                postmanOcSwitch.disabled = false;
+            }
+        }
+    });
+
+    otherSwitches.forEach(function (switchElement) {
+        switchElement.checked = true;
+        switchElement.disabled = true;
+    });
+
+    allSwitch.addEventListener("change", function () {
+        var allChecked = allSwitch.checked;
+
+        otherSwitches.forEach(function (switchElement) {
+            switchElement.checked = allChecked;
+        });
+
+        otherSwitches.forEach(function (switchElement) {
+            switchElement.disabled = allChecked;
+        });
+
+        if (v5Radio.checked) {
+            ocUiSwitch.checked = false;
+            ocUiSwitch.disabled = true;
+            postmanOcSwitch.checked = false;
+            postmanOcSwitch.disabled = true;
+        }
+    });
+
+    otherSwitches.forEach(function (switchElement) {
+        switchElement.addEventListener("change", function () {
+            var allChecked = Array.from(otherSwitches).every(function (switchElement) {
+                return switchElement.checked;
+            });
+
+            allSwitch.checked = allChecked;
+        });
+    });
+// FIN MANEJO DE SWITCHES
+
+
+    var statusInterval;
+
+    updateStatus();
+
+});
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <div class="header-box">
+            <img src="{{ url_for('static', filename='img/safewalk.png') }}" height="25" alt="">
+        </div>
+        <div class="header-box" id="header_box_center">
+                <p><b>Test Results</b></p>
+        </div>
+
+    </div>
+
+    <div class="main">
+        <div id="main_box_left" class="main-box">
+            <div class="main-box-header">
+                <div class="main-box-header-group">
+                    <h5 class="cursor-default">Run Tests</h5>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="runTestForm">
+                <label for="category_select" id="category_select_label">Custom run</label>
+                <div class="main-box-header-group-sub" id="category_select_main">
+                    <select id="category_select" class="form-select form-select-sm" name="selected_version">
+                        <option value="">Select Version</option>
+                        {% for version in versions %}
+                            <option value="{{ version }}">{{ version }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary btn-sm" type="button" id="runButton">Run</button>
+                    <button class="btn btn-danger btn-sm" type="button" id="abortButton">Abort</button>
+                </div>
+
+                <div class="mb-3 mailbox">
+                    <label for="inputMail" class="form-label">Email notification (optional)</label>
+                    <input type="email" class="form-control" id="inputMail" name="inputMail" aria-describedby="emailHelp">
+                </div>
+
+
+                <div class="jumbotron jumbotron-fluid">
+                    <div class="container" id="logBox">
+                        {% if isInProgress == True %}
+                            <p>Tests are RUNNING ({{inProgressPlatform}})</p>
+                        {% else %}
+                            {%if result == "SUCCESS" %}
+                                <p>Tests were FINISHED ({{inProgressPlatform}})</p>
+                            {% elif result == "ABORTED" %}
+                                <p>Tests were ABORTED ({{inProgressPlatform}})</p>
+                            {% else %}
+                                <p>Tests are NOT RUNNING ({{inProgressPlatform}})</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <br/>
+                    <div class="row">
+                        <p class="radio-tittle">Safewalk Platform</p>
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input-radio" type="radio" name="safewalkRadio" id="multitenancyPlatform" value="multitenancy" checked>
+                                <label class="form-check-label" for="multitenancyPlatform">MT</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input-radio" type="radio" name="safewalkRadio" id="V5Platform"  value="v5" >
+                                <label class="form-check-label" for="V5Platform">V5</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="devSwitch">
+                                <label class="form-check-label" for="devSwitch">Dev</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <div>
+                        <div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="allSwitch" checked>
+                                <label class="form-check-label" for="allSwitch">All</label>
+                            </div>
+                        </div>
+                        <p class="switch-tittle">UI</p>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="oc-ui">
+                            <label class="form-check-label" for="oc-ui">Orchestrator UI</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="tnt-ui">
+                            <label class="form-check-label" for="tnt-ui">Tenant UI</label>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <div>
+                        <p class="switch-tittle">Authentication</p>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auth-api">
+                            <label class="form-check-label" for="auth-api">API Authentication</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auth-radius">
+                            <label class="form-check-label" for="auth-radius">Radius Authentication</label>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <div>
+                        <p class="switch-tittle">Postman APIs</p>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="postman-oc">
+                            <label class="form-check-label" for="postman-oc">Orchestrator</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="postman-tnt">
+                            <label class="form-check-label" for="postman-tnt">Tenant</label>
+                        </div>
+                    </div>
+                    <br/>
+                </div>
+            </form>
+
+            <br class="separator">
+
+            <div class="scrollable">
+                <div class="scrolleable-box" id="actions">
+                </div>
+            </div>
+        </div>
+
+
+        <div class="main-box list_box">
+            <div class="main-box-header">
+                <div class="main-box-header-group">
+                    <h5 class="cursor-default">UI & Authentication</h5>
+                    <p class="cursor-default"></p>
+                </div>
+            </div>
+
+            <br class="separator">
+
+            <div class="scrollable">
+                <div class="scrolleable-box" id="ui">
+                    {% for report in reports %}
+                    <div class="item">
+                        {% if report[1] %}
+                            <div class="item-box item-box-selectable" onclick="window.open('/reports/{{ report[0] }}/ui/{{ report[1] }}');" >
+                                 <h6 class="item-title cursor-default">{{ report[1] }}</h6>
+                            </div>
+                        {% else %}
+                            <div class="item-box">
+                                <h6 class="item-title cursor-default">{{ report[1] }}</h6>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+
+        <div class="main-box list_box">
+            <div class="main-box-header">
+                <div class="main-box-header-group">
+                    <h5 class="cursor-default">API Orchestrator</h5>
+                    <p class="cursor-default"></p>
+                </div>
+            </div>
+
+            <br class="separator">
+
+            <div class="scrollable">
+                <div class="scrolleable-box" id="postman-orchestrator">
+                    {% for report in reports %}
+                    <div class="item">
+                        {% if report[2] %}
+                            <div class="item-box item-box-selectable" onclick="window.open('/reports/{{ report[0] }}/postman/orchestrator/{{ report[2] }}');" >
+                                 <h6 class="item-title cursor-default">{{ report[2] }}</h6>
+                            </div>
+                        {% else %}
+                            <div class="item-box">
+                                <h6 class="item-title cursor-default">{{ report[2] }}</h6>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="main-box list_box">
+            <div class="main-box-header">
+                <div class="main-box-header-group">
+                    <h5 class="cursor-default">API Tenant</h5>
+                    <p class="cursor-default"></p>
+                </div>
+            </div>
+
+            <br class="separator">
+
+            <div class="scrollable">
+                <div class="scrolleable-box" id="postman-tenant">
+                    {% for report in reports %}
+                    <div class="item">
+                        {% if report[3] %}
+                            <div class="item-box item-box-selectable" onclick="window.open('/reports/{{ report[0] }}/postman/tenant/{{ report[3] }}');" >
+                                 <h6 class="item-title cursor-default">{{ report[3] }}</h6>
+                            </div>
+                        {% else %}
+                            <div class="item-box">
+                                <h6 class="item-title cursor-default">{{ report[3] }}</h6>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="main-box list_box">
+            <div class="main-box-header">
+                <div class="main-box-header-group">
+                    <h5 class="cursor-default">Troubleshooting Package</h5>
+                    <p class="cursor-default"></p>
+                </div>
+            </div>
+
+            <br class="separator">
+
+            <div class="scrollable">
+                <div class="scrolleable-box" id="tp-tenant">
+                    {% for report in reports %}
+                    <div class="item">
+                        <div class="item-box">
+                            {% if report[4][0] %}
+                                <a class="item-box item-box-selectable troubleshootingPackageLink" href="/reports/{{ report[0] }}/troubleshooting/{{ report[4][0] }}" download="{{ report[4][0] }}">
+                                    <h6 class="item-title cursor-default">{{report[4][0]}}</h6>
+                                </a>
+                                {% else %}
+                                    <div class="item-box">
+                                        <h6 class="item-title cursor-default"></h6>
+                                    </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

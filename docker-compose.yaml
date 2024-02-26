@@ -1,0 +1,12 @@
+version: '3.3'
+services:
+  testing-web-console:
+    image: altipeak/testing-web-console:latest
+    container_name: testing-web-console
+    restart: unless-stopped
+    dns:
+      - 192.168.140.1
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./reports:/app/reports
